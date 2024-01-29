@@ -1,1 +1,1 @@
-export const DB_NAME='CUSTOM_TUBE';
+export const DB_NAME='custom_tube';
