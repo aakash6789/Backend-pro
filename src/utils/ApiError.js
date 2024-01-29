@@ -8,3 +8,5 @@ class ApiError extends Error{
         this.success=false;
     }
 }
+
+export default ApiError;
