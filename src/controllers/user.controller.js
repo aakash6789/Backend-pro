@@ -7,12 +7,12 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 const generateAccessAndRefreshToken=async(userId)=>{
     try {
         const user= await User.findById(userId);
-        const acessToken=user.generateAccessToken();
-        const refreshToken=user.generateRefreshToken();
-        user.refreshToken=refreshToken;
-        user.save({validateBeforeSave:true});
+        const accessTokenPr=user.generateAccessToken();
+        const refreshTokenPr=user.generateRefreshToken();
+        user.refreshToken=refreshTokenPr;
+        await user.save({validateBeforeSave:false});
 
-        return {acessToken,refreshToken};
+        return {accessTokenPr,refreshTokenPr};
     } catch (error) {
         throw new ApiError(500,"Something went wrong with token generation");
     }
@@ -61,6 +61,7 @@ const registerUser=asyncHandler(async(req,res)=>{
 
 const loginUser=asyncHandler(async(req,res)=>{
    const {username,email,password}=req.body;
+//    console.log(req.body);
    if(!username && !email){
     throw new ApiError(400, "Any one of email or username is required");
    }
@@ -68,20 +69,34 @@ const loginUser=asyncHandler(async(req,res)=>{
    if(!user){
     throw new ApiError(404, "User does not exist, try creating an account first");
    }
-   if([username,email].some((field)=> User.exists({field}))){
+//    if([username,email].some((field)=> User.exists({field}))){
     const isPassValid=await user.isPasswordCorrect(password);
         if(isPassValid){
-           const {accessToken,refreshToken}=await generateAccessAndRefreshToken(user._id);
+           const {accessTokenPr,refreshTokenPr}=await generateAccessAndRefreshToken(user._id);
+           let accessToken;
+           let refreshToken;
+           await accessTokenPr.then((token)=>{
+            accessToken=token;
+           }).catch(error => {
+            console.error('G Error:', error);
+        });
+           await refreshTokenPr.then((token)=>{
+            refreshToken=token;
+           }).catch(error => {
+            console.error('G Error:', error);
+        });
+        //    console.log(at);
+        //    console.log("rt is");
+        //    console.log(rt);
            const loggedInUser=await User.findById(user._id).select("-password -refreshToken");
-
            const options={
             httpOnly:true,
             secure:true
            }
-            return res.status(200).cookie("accessToken",accessToken,options).cookie("refreshToken",refreshToken,options).json(new ApiResponse(200,{loggedInUser,accessToken,refreshToken},"Logged in successfully"));
+            return res.status(200).cookie("accessToken",accessToken,options).cookie("refreshToken",refreshToken,options ).json(new ApiResponse(200,{user:loggedInUser,accessToken,refreshToken},"Logged in successfully"));
         }
         throw new ApiError(401, "Incorrect password");
-    }
+    // }
 });
 
 const logOutUser=asyncHandler(async(req,res)=>{
