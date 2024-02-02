@@ -30,7 +30,7 @@ const registerUser=asyncHandler(async(req,res)=>{
    if(existedUser){
          throw new ApiError(409,"User already exists!!");
    }
-   console.log(req.files);
+//    console.log(req.files);
    const avatarPath=req.files?.avatar[0]?.path;
    let coverImagePath;
    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
@@ -139,5 +139,64 @@ const options={
 return res.status(200).cookie("accessToken",accessToken,options).cookie("refreshToken",refreshToken,options).json(new ApiResponse(200,{accessToken,refreshToken},"AcessToken rengerenated sucessfully"))
 })
 
+const updatePassword=asyncHandler(async(req,res)=>{
+    const {oldPassword,newPassowrd}=req.body;
 
-export {registerUser,logOutUser,loginUser,refreshAccessToken};
+    const user=await user.findById(req.user?._id);
+    if(!user){
+        throw new ApiError(404,"User does not exist");
+    }
+    const isPasscorrect=await user.isPasscorrect(oldPassword);
+    if(!isPasscorrect){
+        throw new ApiError(400,"Password does not match");
+    }
+    user.password=newPassowrd;
+    await user.save({validateBeforeSave:false});
+
+    return res.status(200).json(new ApiResponse(200,{},"Password changed successfully"));
+})
+
+const getCurrUser=asyncHandler(async(req,res)=>{
+    if(!req.user){
+        throw new ApiError(401,"User is not logged in, bad request")
+    }
+    return res.status(200).json(200,req.user,"User details fetched successfully")
+})
+
+const updateAccountDetails=asyncHandler(async(req,res)=>{
+    const {fullName,email}=req.body;
+    if(!fullName && !email){
+        throw new ApiError(400,"All fields are required");
+    }
+    const user=User.findByIdAndUpdate(req.user?._id,{$set:{fullName,email}},{new:true}).select("-password");
+
+    return res.status(200).json(new ApiResponse(200,user,"User details updated successfully"))
+})
+
+const updateUserAvatar=asyncHandler(async(req,res)=>{
+    const avatarPath=req.file?.path;
+    if(!avatarPath){
+        throw new ApiError(400,"Avatar file is needed");
+    }
+    const avatar=await uploadOnCloudinary(avatarPath);
+    if(!avatar.url){
+        throw new ApiError(400,"Error while uploading avatar ");
+    }
+    const user=User.findByIdAndUpdate(req.user?._id,{$set:{avatar:avatar.url}},{new:true}).select("-password");
+    return res.status(200).json(new ApiResponse(200,user,"User avatar updated successfully"))
+
+})
+const updateUserCoverImage=asyncHandler(async(req,res)=>{
+    const coverImagePath=req.file?.path;
+    if(!coverImagePath){
+        throw new ApiError(400,"Cover image is needed");
+    }
+    const coverImage=await uploadOnCloudinary(coverImagePath);
+    if(!coverImage.url){
+        throw new ApiError(400,"Error while uploading coverImage ");
+    }
+    const user=User.findByIdAndUpdate(req.user?._id,{$set:{coverImage:coverImage.url}},{new:true}).select("-password");
+    return res.status(200).json(new ApiResponse(200,user,"User coverImage updated successfully"))
+
+})
+export {registerUser,logOutUser,loginUser,refreshAccessToken,getCurrUser,updatePassword,updateUserAvatar,updateUserCoverImage};
