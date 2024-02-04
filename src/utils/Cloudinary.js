@@ -26,8 +26,27 @@ const uploadOnCloudinary=async(localfilePath)=>{
       }
 
 }
+function extractPublicId(cloudinaryUrl) {
+  const parts = cloudinaryUrl.split('/');
+  const publicIdWithExtension = parts[parts.length - 1];
+  const publicId = publicIdWithExtension.split('.')[0]; // Remove file extension if needed
+  return publicId;
+}
 
-export {uploadOnCloudinary};
+const deleteImageOnCloudinary=async(localfilePath)=>{
+  const options={
+    colors:true
+  };
+  try {
+    const publicId=extractPublicId(localfilePath);
+    cloudinary.uploader.destroy(`${publicId}`).then(result=>console.log(result));
+    
+  } catch (error) {
+    console.log("Error fetching image details from Cloudinary",error);
+  }
+}
+
+export {uploadOnCloudinary,deleteImageOnCloudinary};
           
 
 
