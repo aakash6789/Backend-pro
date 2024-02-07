@@ -316,4 +316,4 @@ const getWatchHistory=asyncHandler(async(req,res)=>{
 
     return res.status(200).json(new ApiResponse(200,user[0].watchHistory,"Watch History fetched successfully"))
 })
-export {registerUser,logOutUser,loginUser,refreshAccessToken,getCurrUser,updatePassword,updateUserAvatar,updateUserCoverImage};
+export {registerUser,logOutUser,loginUser,refreshAccessToken,getCurrUser,updatePassword,updateUserAvatar,updateUserCoverImage,updateAccountDetails,getUserChannelProfile,getWatchHistory};
