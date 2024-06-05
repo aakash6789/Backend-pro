@@ -23,6 +23,7 @@ const generateAccessAndRefreshToken=async(userId)=>{
 }
 
 const registerUser=asyncHandler(async(req,res)=>{
+    console.log(req.body);
     const {fullName,email, username, password}=req.body;
    if([fullName,email,username,password].some((field)=> {return field?.trim()===""})){
     throw new ApiError({statusCode:400,message:"All fields are required"})
@@ -65,8 +66,8 @@ const registerUser=asyncHandler(async(req,res)=>{
 });
 
 const loginUser=asyncHandler(async(req,res)=>{
+    console.log(req.body);
    const {username,email,password}=req.body;
-//    console.log(req.body);
    if(!username && !email){
     throw new ApiError(400, "Any one of email or username is required");
    }
@@ -141,17 +142,17 @@ return res.status(200).cookie("accessToken",accessToken,options).cookie("refresh
 })
 
 const updatePassword=asyncHandler(async(req,res)=>{
-    const {oldPassword,newPassowrd}=req.body;
-
-    const user=await user.findById(req.user?._id);
+    console.log("upd",req.user);
+    const {oldPassword,newPassword}=req.body;
+    const user=await User.findById(req.user?._id);
     if(!user){
         throw new ApiError(404,"User does not exist");
     }
-    const isPasscorrect=await user.isPasscorrect(oldPassword);
+    const isPasscorrect=await user.isPasswordCorrect(oldPassword);
     if(!isPasscorrect){
         throw new ApiError(400,"Password does not match");
     }
-    user.password=newPassowrd;
+    user.password=newPassword;
     await user.save({validateBeforeSave:false});
 
     return res.status(200).json(new ApiResponse(200,{},"Password changed successfully"));
